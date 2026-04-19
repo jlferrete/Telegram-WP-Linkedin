@@ -15,9 +15,9 @@ Write-Host "[security] pip-audit"
 
 if (Get-Command gitleaks -ErrorAction SilentlyContinue) {
     Write-Host "[security] gitleaks"
-    gitleaks detect --source . --no-git
+    gitleaks git --redact --no-banner
 } else {
-    Write-Host "[security] gitleaks not found, skipping"
+    throw "gitleaks is required but not installed"
 }
 
 Write-Host "Local quality gate passed"

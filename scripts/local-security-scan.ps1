@@ -6,16 +6,16 @@ Write-Host "[security] pip-audit"
 
 if (Get-Command gitleaks -ErrorAction SilentlyContinue) {
     Write-Host "[security] gitleaks"
-    gitleaks detect --source . --no-git
+    gitleaks git --redact --no-banner
 } else {
-    Write-Host "[security] gitleaks not found, skipping"
+    throw "gitleaks is required but not installed"
 }
 
 if (Get-Command trivy -ErrorAction SilentlyContinue) {
     Write-Host "[security] trivy fs"
     trivy fs .
 } else {
-    Write-Host "[security] trivy not found, skipping"
+    throw "trivy is required but not installed"
 }
 
 Write-Host "Local security scan completed"
