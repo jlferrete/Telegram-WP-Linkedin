@@ -33,6 +33,7 @@ Reducir consumo de requests premium sin perder calidad tecnica ni disciplina ent
 - mezclar multiples iniciativas no relacionadas en una sola iteracion
 - abrir ciclos largos de prueba/error sin hipotesis explicita
 - depender de CI cloud para validaciones basicas que pueden correrse localmente
+- ejecutar gate incompleto omitiendo `gitleaks` o `trivy`
 
 ## Politica de actualizacion
 

@@ -15,6 +15,7 @@ Garantizar entregas repetibles, seguras y observables desde commit hasta ejecuci
 ## Validacion local-first (cost-aware)
 
 Para controlar costos operativos, el gate principal se ejecuta localmente antes de push/merge.
+`gitleaks` y `trivy` son requeridos en la maquina de desarrollo.
 
 Comandos base:
 

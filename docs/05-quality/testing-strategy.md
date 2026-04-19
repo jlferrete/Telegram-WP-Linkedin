@@ -39,7 +39,7 @@ Cuando cambie una API:
 - lint: `ruff check app tests`
 - typing: `mypy app tests`
 - tests: `pytest`
-- security: `gitleaks`, `pip-audit`, `trivy fs` (opcional si esta instalado localmente)
+- security: `gitleaks`, `pip-audit`, `trivy fs` (obligatorio en local)
 
 Comandos operativos recomendados:
 

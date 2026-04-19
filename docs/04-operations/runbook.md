@@ -32,7 +32,7 @@ Notas:
 - base SQLite inicializada y con `telegram_offset`.
 - lock de proceso validado.
 - logs JSON redirigidos a archivo/collector.
-- gate local en verde (`local-quality-gate.ps1` + `local-security-scan.ps1`).
+- gate local en verde (`local-quality-gate.ps1` + `local-security-scan.ps1`, ambos obligatorios).
 - cumplimiento de `docs/06-security/secrets-operating-standard.md`.
 
 Ejecucion recomendada del gate local:
