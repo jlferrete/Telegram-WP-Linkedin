@@ -10,7 +10,12 @@ from app.core.ports import TelegramPort
 
 
 class TelegramAdapter(TelegramPort):
-    def __init__(self, bot_token: str, client: httpx.Client, api_base_url: str = "https://api.telegram.org") -> None:
+    def __init__(
+        self,
+        bot_token: str,
+        client: httpx.Client,
+        api_base_url: str = "https://api.telegram.org",
+    ) -> None:
         self.bot_token = bot_token
         self.client = client
         self.api_base_url = api_base_url.rstrip("/")

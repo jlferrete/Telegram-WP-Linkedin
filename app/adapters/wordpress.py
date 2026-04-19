@@ -16,7 +16,7 @@ class WordPressAdapter(WordPressPort):
         self.client = client
 
     def publish_post(self, *, title: str, html_content: str) -> str:
-        token = base64.b64encode(f"{self.user}:{self.app_password}".encode("utf-8")).decode("ascii")
+        token = base64.b64encode(f"{self.user}:{self.app_password}".encode()).decode("ascii")
         response = self.client.post(
             f"{self.base_url}/wp-json/wp/v2/posts",
             headers={"Authorization": f"Basic {token}"},

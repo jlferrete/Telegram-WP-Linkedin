@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import random
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, TypeVar
 
 import httpx
-
-T = TypeVar("T")
 
 
 @dataclass(frozen=True)
@@ -19,7 +17,10 @@ class RetryConfig:
 
 
 def is_retryable_exception(exc: Exception) -> bool:
-    if isinstance(exc, (httpx.TimeoutException, httpx.ConnectError, httpx.ReadError, httpx.WriteError)):
+    if isinstance(
+        exc,
+        (httpx.TimeoutException, httpx.ConnectError, httpx.ReadError, httpx.WriteError),
+    ):
         return True
     if isinstance(exc, httpx.HTTPStatusError):
         status = exc.response.status_code
@@ -27,14 +28,14 @@ def is_retryable_exception(exc: Exception) -> bool:
     return False
 
 
-def retry_call(
-    fn: Callable[[], T],
+def retry_call[ResultT](
+    fn: Callable[[], ResultT],
     *,
     config: RetryConfig,
     should_retry: Callable[[Exception], bool],
     on_retry: Callable[[int, Exception, float], None] | None = None,
     sleep_fn: Callable[[float], None] = time.sleep,
-) -> T:
+) -> ResultT:
     if config.attempts < 1:
         raise ValueError("Retry attempts must be >= 1")
 

@@ -7,7 +7,12 @@ from app.core.ports import PexelsPort
 
 
 class PexelsAdapter(PexelsPort):
-    def __init__(self, api_key: str, client: httpx.Client, api_base_url: str = "https://api.pexels.com/v1") -> None:
+    def __init__(
+        self,
+        api_key: str,
+        client: httpx.Client,
+        api_base_url: str = "https://api.pexels.com/v1",
+    ) -> None:
         self.api_key = api_key
         self.client = client
         self.api_base_url = api_base_url.rstrip("/")
