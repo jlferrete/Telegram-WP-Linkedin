@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import httpx
-
 from app.adapters.openai import OpenAIAdapter
 from app.adapters.pexels import PexelsAdapter
 from app.adapters.telegram import TelegramAdapter

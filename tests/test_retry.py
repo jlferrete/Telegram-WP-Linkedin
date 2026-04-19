@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import httpx
 import pytest
-
 from app.infra.retry import RetryConfig, is_retryable_exception, retry_call
 
 
@@ -21,7 +20,12 @@ def test_retry_call_retries_until_success() -> None:
 
     result = retry_call(
         flaky,
-        config=RetryConfig(attempts=3, base_delay_seconds=0.0, max_delay_seconds=0.0, jitter_factor=0.0),
+        config=RetryConfig(
+            attempts=3,
+            base_delay_seconds=0.0,
+            max_delay_seconds=0.0,
+            jitter_factor=0.0,
+        ),
         should_retry=is_retryable_exception,
         on_retry=lambda attempt, _exc, delay: retries.append((attempt, delay)),
         sleep_fn=lambda delay: sleeps.append(delay),

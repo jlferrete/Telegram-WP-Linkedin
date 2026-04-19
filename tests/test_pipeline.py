@@ -174,7 +174,8 @@ def test_run_once_retries_transient_linkedin_failures(tmp_path: Path) -> None:
         assert linkedin.calls == 3
 
         retry_rows = conn.execute(
-            "SELECT COUNT(*) AS c FROM events WHERE update_id = 201 AND stage = 'linkedin' AND status = 'retry'"
+            "SELECT COUNT(*) AS c FROM events "
+            "WHERE update_id = 201 AND stage = 'linkedin' AND status = 'retry'"
         ).fetchone()
         assert retry_rows is not None
         assert int(retry_rows["c"]) == 2

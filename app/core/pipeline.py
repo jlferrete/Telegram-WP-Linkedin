@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 from uuid import uuid4
 
-from app.infra.retry import RetryConfig, is_retryable_exception, retry_call
 from app.core.models import InboundUpdate
 from app.core.ports import LinkedInPort, OpenAIPort, PexelsPort, TelegramPort, WordPressPort
+from app.infra.retry import RetryConfig, is_retryable_exception, retry_call
 from app.repositories.events_repo import EventsRepository
 from app.repositories.publications_repo import PublicationsRepository
 from app.repositories.runs_repo import RunsRepository
@@ -16,7 +16,10 @@ from app.repositories.updates_repo import UpdatesRepository
 
 def _extract_link_payload(text: str) -> tuple[str | None, str]:
     tokens = text.split()
-    candidate_url = next((token for token in tokens if token.startswith("http://") or token.startswith("https://")), None)
+    candidate_url = next(
+        (token for token in tokens if token.startswith("http://") or token.startswith("https://")),
+        None,
+    )
     if candidate_url is None:
         return None, text[:80]
     title_hint = text.replace(candidate_url, "").strip()
@@ -139,7 +142,11 @@ def _process_update(
 
     source_url, title_hint = _extract_link_payload(update.text)
     if source_url is None:
-        publications_repo.upsert_status(update_id=update.update_id, status="failed", last_error="url not found")
+        publications_repo.upsert_status(
+            update_id=update.update_id,
+            status="failed",
+            last_error="url not found",
+        )
         events_repo.add(
             run_id=run_id,
             update_id=update.update_id,
@@ -150,7 +157,11 @@ def _process_update(
         return
 
     if dry_run:
-        publications_repo.upsert_status(update_id=update.update_id, status="pending", last_error=None)
+        publications_repo.upsert_status(
+            update_id=update.update_id,
+            status="pending",
+            last_error=None,
+        )
         events_repo.add(
             run_id=run_id,
             update_id=update.update_id,
@@ -161,7 +172,12 @@ def _process_update(
         return
 
     wp_post_id: str | None = None
-    retry_config = RetryConfig(attempts=3, base_delay_seconds=0.5, max_delay_seconds=4.0, jitter_factor=0.2)
+    retry_config = RetryConfig(
+        attempts=3,
+        base_delay_seconds=0.5,
+        max_delay_seconds=4.0,
+        jitter_factor=0.2,
+    )
 
     def on_retry(stage: str) -> Callable[[int, Exception, float], None]:
         def _handler(attempt: int, exc: Exception, delay: float) -> None:
@@ -183,7 +199,10 @@ def _process_update(
             on_retry=on_retry("openai"),
         )
         wp_post_id = retry_call(
-            lambda: wordpress.publish_post(title=generated.title, html_content=generated.wordpress_html),
+            lambda: wordpress.publish_post(
+                title=generated.title,
+                html_content=generated.wordpress_html,
+            ),
             config=retry_config,
             should_retry=is_retryable_exception,
             on_retry=on_retry("wordpress"),
@@ -206,7 +225,10 @@ def _process_update(
             should_retry=is_retryable_exception,
             on_retry=on_retry("linkedin"),
         )
-        publications_repo.mark_linkedin_success(update_id=update.update_id, linkedin_post_id=linkedin_post_id)
+        publications_repo.mark_linkedin_success(
+            update_id=update.update_id,
+            linkedin_post_id=linkedin_post_id,
+        )
         events_repo.add(
             run_id=run_id,
             update_id=update.update_id,
@@ -218,7 +240,11 @@ def _process_update(
             notifier(update.chat_id, f"Publicado OK. update_id={update.update_id}")
     except Exception as exc:
         status = "partial" if wp_post_id else "failed"
-        publications_repo.upsert_status(update_id=update.update_id, status=status, last_error=str(exc))
+        publications_repo.upsert_status(
+            update_id=update.update_id,
+            status=status,
+            last_error=str(exc),
+        )
         events_repo.add(
             run_id=run_id,
             update_id=update.update_id,
