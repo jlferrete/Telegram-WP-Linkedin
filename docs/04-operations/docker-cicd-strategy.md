@@ -12,33 +12,44 @@ Garantizar entregas repetibles, seguras y observables desde commit hasta ejecuci
 - Volumen para persistir SQLite y logs.
 - Variables via entorno (nunca bakear secretos en imagen).
 
-## GitHub Actions (pipeline por etapas)
+## Validacion local-first (cost-aware)
 
-### 1. Quality Gate
+Para controlar costos operativos, el gate principal se ejecuta localmente antes de push/merge.
+
+Comandos base:
+
+```powershell
+./scripts/local-quality-gate.ps1
+./scripts/local-security-scan.ps1
+```
+
+## GitHub Actions (opcional/minimo)
+
+### 1. Quality Gate (opcional)
 
 - `ruff check`
 - `ruff format --check`
 - `mypy app`
 - `pytest --maxfail=1 --disable-warnings --cov=app`
 
-### 2. Security Gate
+### 2. Security Gate (opcional)
 
 - `pip-audit`
 - `trivy fs .`
 - `gitleaks` para detectar secretos
 
-### 3. Build & Validate
+### 3. Build & Validate (opcional)
 
 - build de imagen Docker
 - smoke test del contenedor (`run-once --dry-run`)
 - tag por SHA corto
 
-### 4. Release
+### 4. Release (solo tags)
 
 - en tag semantico (`v*.*.*`): push a GHCR
 - generar release notes automaticas
 
-### 5. Deploy
+### 5. Deploy (solo cuando aplique)
 
 - `staging` automatico al merge en `main`
 - `production` con environment protection + approval manual

@@ -32,8 +32,15 @@ Notas:
 - base SQLite inicializada y con `telegram_offset`.
 - lock de proceso validado.
 - logs JSON redirigidos a archivo/collector.
-- CI/CD en verde (quality + security + build).
+- gate local en verde (`local-quality-gate.ps1` + `local-security-scan.ps1`).
 - cumplimiento de `docs/06-security/secrets-operating-standard.md`.
+
+Ejecucion recomendada del gate local:
+
+```powershell
+./scripts/local-quality-gate.ps1
+./scripts/local-security-scan.ps1
+```
 
 ## Troubleshooting
 

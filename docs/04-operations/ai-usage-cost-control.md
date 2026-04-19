@@ -11,6 +11,7 @@ Reducir consumo de requests premium sin perder calidad tecnica ni disciplina ent
 - reutilizar skills y reglas compactas del registry antes de investigar desde cero
 - evitar re-ejecutar tests pesados si no hubo cambios relevantes
 - priorizar diffs pequenos y commits atomicos para limitar revalidaciones
+- ejecutar quality/security en local antes de cualquier push
 
 ## Checklist antes de pedir trabajo al agente
 
@@ -31,6 +32,7 @@ Reducir consumo de requests premium sin perder calidad tecnica ni disciplina ent
 - rehacer analisis ya documentado en `docs/`
 - mezclar multiples iniciativas no relacionadas en una sola iteracion
 - abrir ciclos largos de prueba/error sin hipotesis explicita
+- depender de CI cloud para validaciones basicas que pueden correrse localmente
 
 ## Politica de actualizacion
 

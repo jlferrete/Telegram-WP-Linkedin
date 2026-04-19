@@ -34,11 +34,18 @@ Cuando cambie una API:
 3. mantener compatibilidad con respuesta previa cuando sea viable
 4. documentar cambio y decision en ADR o changelog tecnico
 
-## Gating en CI
+## Gating local-first
 
 - lint: `ruff check app tests`
-- typing: `mypy app`
+- typing: `mypy app tests`
 - tests: `pytest`
-- security: `gitleaks`, `pip-audit`, `trivy fs`
+- security: `gitleaks`, `pip-audit`, `trivy fs` (opcional si esta instalado localmente)
+
+Comandos operativos recomendados:
+
+```powershell
+./scripts/local-quality-gate.ps1
+./scripts/local-security-scan.ps1
+```
 
 Sin estos gates en verde, no se libera imagen ni se despliega.
