@@ -29,10 +29,11 @@ Comandos base:
 ### 1. PR Gates (implementado)
 
 - Workflow: `.github/workflows/pr-gates.yml`
-- Trigger: `pull_request` hacia `main`
+- Trigger: `workflow_dispatch` (manual)
 - Jobs/checks estables:
   - `quality-pr` -> `ruff check app tests` + `pytest -q`
   - `security-pr` -> `pip-audit` + `gitleaks`
+- Uso recomendado: ejecutar manualmente solo en hitos/riesgo alto para evidencia remota sin costo recurrente por PR.
 
 ### 2. Release por tags semanticos (implementado)
 
@@ -51,8 +52,8 @@ Comandos base:
 
 - Trunk-based development con PRs cortas.
 - Protecciones en `main`:
-  - checks obligatorios: `quality-pr`, `security-pr`
-  - 1 o 2 approvals
+  - 1 aprobacion obligatoria
+  - conversation resolution obligatoria
   - no direct pushes
 
 ## Estrategia de despliegue

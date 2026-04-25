@@ -27,18 +27,20 @@ Ejemplos:
 
 - PR chica (ideal <= 300 lineas netas).
 - Commits atomicos por unidad semantica.
-- Checks obligatorios en verde: `quality-pr` y `security-pr`.
+- Validacion local obligatoria en verde: `./scripts/local-quality-gate.ps1` y `./scripts/local-security-scan.ps1`.
+- Validacion cloud opcional/manual: workflow `PR Gates` via `workflow_dispatch` cuando se requiere evidencia remota.
 - Minimo 1 aprobacion antes de merge.
 - Merge squash permitido solo si conserva mensaje semantico claro.
 
-## Required checks en branch protection (`main`)
+## Branch protection en `main`
 
 Configurar en GitHub -> Settings -> Branches -> Branch protection rule sobre `main`:
 
-- `quality-pr`
-- `security-pr`
+- minimo 1 aprobacion
+- required conversation resolution
+- no direct pushes / no force pushes
 
-Estos nombres deben mantenerse estables para evitar drift entre governance y CI.
+No se fuerzan required status checks para mantener costo cloud minimo.
 
 ## Commits (conventional commits)
 
