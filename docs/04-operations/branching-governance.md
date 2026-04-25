@@ -27,9 +27,18 @@ Ejemplos:
 
 - PR chica (ideal <= 300 lineas netas).
 - Commits atomicos por unidad semantica.
-- Checks obligatorios en verde (lint, mypy, pytest, security).
+- Checks obligatorios en verde: `quality-pr` y `security-pr`.
 - Minimo 1 aprobacion antes de merge.
 - Merge squash permitido solo si conserva mensaje semantico claro.
+
+## Required checks en branch protection (`main`)
+
+Configurar en GitHub -> Settings -> Branches -> Branch protection rule sobre `main`:
+
+- `quality-pr`
+- `security-pr`
+
+Estos nombres deben mantenerse estables para evitar drift entre governance y CI.
 
 ## Commits (conventional commits)
 
