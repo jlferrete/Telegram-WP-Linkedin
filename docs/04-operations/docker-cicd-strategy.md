@@ -40,6 +40,7 @@ Comandos base:
 - Trigger: `push` sobre tags `v*.*.*`
 - Job/check estable: `release-image`
 - Accion: build + push de imagen a `ghcr.io/<org>/telegram-wp-linkedin` con tag semantico y `latest`
+- Environment objetivo: `production` (con required reviewer y policy de ramas protegidas)
 
 ### 3. Deploy (solo cuando aplique)
 
