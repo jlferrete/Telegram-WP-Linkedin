@@ -34,10 +34,12 @@ Comandos base:
   - `quality-pr` -> `ruff check app tests` + `pytest -q`
   - `security-pr` -> `pip-audit` + `gitleaks`
 
-### 2. Release (pendiente del cambio SDD 2026-04-22)
+### 2. Release por tags semanticos (implementado)
 
-- Trigger objetivo: tags semanticos `v*.*.*`
-- Objetivo: build + push a GHCR solo en release tags
+- Workflow: `.github/workflows/release.yml`
+- Trigger: `push` sobre tags `v*.*.*`
+- Job/check estable: `release-image`
+- Accion: build + push de imagen a `ghcr.io/<org>/telegram-wp-linkedin` con tag semantico y `latest`
 
 ### 3. Deploy (solo cuando aplique)
 
