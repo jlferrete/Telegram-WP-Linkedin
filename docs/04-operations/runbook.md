@@ -60,6 +60,38 @@ Cuando NO correr Actions:
 - refactors internos sin impacto en imagen/release
 - pruebas exploratorias que pueden validarse completamente en local
 
+## Cadencia de release recomendada (costo-controlada)
+
+Objetivo: reducir ejecuciones de `Release Image` sin perder trazabilidad.
+
+Politica:
+
+- frecuencia base: release quincenal (cada 2 semanas)
+- excepcion: hotfix critico (Sev1/Sev2) permite release inmediato
+- evitar tags intermedios para pruebas; usar validacion local para iteraciones
+
+Ventana sugerida:
+
+- martes o miercoles, horario laboral (evita aprobaciones fuera de horario)
+- checklist previo obligatorio en local:
+  - `./scripts/local-quality-gate.ps1`
+  - `./scripts/local-security-scan.ps1`
+
+Convencion de versionado:
+
+- `vMAJOR.MINOR.PATCH`
+- `PATCH`: bugfixes/hardening sin cambios de contrato
+- `MINOR`: mejoras compatibles
+- `MAJOR`: cambios incompatibles o rediseño operativo
+
+Flujo minimo por release:
+
+1. consolidar cambios listos en `main`
+2. ejecutar gates locales obligatorios
+3. crear tag semantico (`vX.Y.Z`) sobre `main`
+4. aprobar deployment de `production` en GitHub Actions
+5. registrar resultado en runbook/incidente si hubo desvio
+
 Ejecucion recomendada del gate local:
 
 ```powershell
