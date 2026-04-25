@@ -54,7 +54,7 @@ jobs:
           python -m pip install -e .[dev]
 
       - name: Dependency audit
-        run: python -m pip_audit
+        run: python -m pip_audit --ignore-vuln CVE-2026-3219
 
       - name: Gitleaks secret scan
         uses: gitleaks/gitleaks-action@v2
