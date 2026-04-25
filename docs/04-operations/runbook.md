@@ -35,6 +35,31 @@ Notas:
 - gate local en verde (`local-quality-gate.ps1` + `local-security-scan.ps1`, ambos obligatorios).
 - cumplimiento de `docs/06-security/secrets-operating-standard.md`.
 
+## Politica de uso minimo de GitHub Actions (cost control)
+
+Objetivo: minimizar minutos cloud manteniendo gobernanza enterprise.
+
+Reglas operativas:
+
+- `PR Gates` desactivado por defecto para evitar costo recurrente por cada PR.
+- validacion obligatoria ocurre localmente antes de abrir/mergear PR:
+  - `./scripts/local-quality-gate.ps1`
+  - `./scripts/local-security-scan.ps1`
+- `Release Image` se usa solo para releases reales por tag semantico (`v*.*.*`).
+- evitar tags de prueba frecuentes; agrupar cambios y releasear en lotes razonables.
+
+Cuando SI correr Actions:
+
+- release candidate que realmente podria promoverse a produccion
+- cambio de Dockerfile/base image o cadena de build de contenedor
+- cambio de permisos/policies en environments o publish a GHCR
+
+Cuando NO correr Actions:
+
+- PRs de documentacion
+- refactors internos sin impacto en imagen/release
+- pruebas exploratorias que pueden validarse completamente en local
+
 Ejecucion recomendada del gate local:
 
 ```powershell
