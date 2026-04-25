@@ -30,6 +30,7 @@ Estado actual para costo minimo:
 
 - `PR Gates`: desactivado en GitHub (se mantiene workflow versionado para posible uso futuro).
 - `Release Image`: activo solo por tags semanticos y con aprobacion de environment `production`.
+- Cadencia recomendada de tags de release: quincenal, excepto hotfix critico.
 
 ### 1. PR Gates (implementado)
 
