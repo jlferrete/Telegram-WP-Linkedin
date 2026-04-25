@@ -40,7 +40,7 @@ Comandos base:
 - Workflow: `.github/workflows/release.yml`
 - Trigger: `push` sobre tags `v*.*.*`
 - Job/check estable: `release-image`
-- Accion: build + push de imagen a `ghcr.io/<org>/telegram-wp-linkedin` con tag semantico y `latest`
+- Accion: build + push de imagen a `ghcr.io/<org>/telegram-wp-linkedin` con tag semantico (sin `latest` en validacion controlada)
 - Environment objetivo: `production` (con required reviewer y policy de ramas protegidas)
 
 ### 3. Deploy (solo cuando aplique)
