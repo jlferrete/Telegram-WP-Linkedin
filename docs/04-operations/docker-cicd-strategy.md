@@ -26,6 +26,11 @@ Comandos base:
 
 ## GitHub Actions (minimo costo-aware)
 
+Estado actual para costo minimo:
+
+- `PR Gates`: desactivado en GitHub (se mantiene workflow versionado para posible uso futuro).
+- `Release Image`: activo solo por tags semanticos y con aprobacion de environment `production`.
+
 ### 1. PR Gates (implementado)
 
 - Workflow: `.github/workflows/pr-gates.yml`
