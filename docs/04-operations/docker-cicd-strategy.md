@@ -24,33 +24,24 @@ Comandos base:
 ./scripts/local-security-scan.ps1
 ```
 
-## GitHub Actions (opcional/minimo)
+## GitHub Actions (minimo costo-aware)
 
-### 1. Quality Gate (opcional)
+### 1. PR Gates (implementado)
 
-- `ruff check`
-- `ruff format --check`
-- `mypy app`
-- `pytest --maxfail=1 --disable-warnings --cov=app`
+- Workflow: `.github/workflows/pr-gates.yml`
+- Trigger: `pull_request` hacia `main`
+- Jobs/checks estables:
+  - `quality-pr` -> `ruff check app tests` + `pytest -q`
+  - `security-pr` -> `pip-audit` + `gitleaks`
 
-### 2. Security Gate (opcional)
+### 2. Release por tags semanticos (implementado)
 
-- `pip-audit`
-- `trivy fs .`
-- `gitleaks` para detectar secretos
+- Workflow: `.github/workflows/release.yml`
+- Trigger: `push` sobre tags `v*.*.*`
+- Job/check estable: `release-image`
+- Accion: build + push de imagen a `ghcr.io/<org>/telegram-wp-linkedin` con tag semantico y `latest`
 
-### 3. Build & Validate (opcional)
-
-- build de imagen Docker
-- smoke test del contenedor (`run-once --dry-run`)
-- tag por SHA corto
-
-### 4. Release (solo tags)
-
-- en tag semantico (`v*.*.*`): push a GHCR
-- generar release notes automaticas
-
-### 5. Deploy (solo cuando aplique)
+### 3. Deploy (solo cuando aplique)
 
 - `staging` automatico al merge en `main`
 - `production` con environment protection + approval manual
@@ -59,7 +50,7 @@ Comandos base:
 
 - Trunk-based development con PRs cortas.
 - Protecciones en `main`:
-  - checks obligatorios
+  - checks obligatorios: `quality-pr`, `security-pr`
   - 1 o 2 approvals
   - no direct pushes
 
