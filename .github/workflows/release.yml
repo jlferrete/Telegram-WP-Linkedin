@@ -13,6 +13,7 @@ jobs:
   release-image:
     name: release-image
     runs-on: ubuntu-latest
+    environment: production
     env:
       IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/telegram-wp-linkedin
     steps:
