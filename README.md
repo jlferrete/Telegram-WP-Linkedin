@@ -11,3 +11,19 @@ Automation pipeline to process Telegram updates and publish content to WordPress
 ```bash
 python -m app.main run-once --dry-run --db-path data/app.db
 ```
+
+## Local gate enforcement
+
+This repository enforces local quality/security gates on `git push` using a versioned pre-push hook.
+
+Setup once per clone:
+
+```bash
+git config core.hooksPath .githooks
+chmod +x .githooks/pre-push
+```
+
+The pre-push hook runs:
+
+- `scripts/local-quality-gate.ps1`
+- `scripts/local-security-scan.ps1`

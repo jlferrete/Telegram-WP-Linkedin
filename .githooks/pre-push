@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+set -eu
+
+if command -v pwsh >/dev/null 2>&1; then
+  PS_CMD="pwsh"
+elif command -v powershell >/dev/null 2>&1; then
+  PS_CMD="powershell"
+else
+  echo "[hook:pre-push] ERROR: PowerShell runtime not found (pwsh/powershell)." >&2
+  exit 1
+fi
+
+echo "[hook:pre-push] running local quality gate"
+"$PS_CMD" -NoProfile -ExecutionPolicy Bypass -File "scripts/local-quality-gate.ps1"
+
+echo "[hook:pre-push] running local security scan"
+"$PS_CMD" -NoProfile -ExecutionPolicy Bypass -File "scripts/local-security-scan.ps1"
+
+echo "[hook:pre-push] local gates passed"
