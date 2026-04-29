@@ -64,3 +64,8 @@ def test_retry_call_raises_when_attempts_invalid() -> None:
             config=RetryConfig(attempts=0),
             should_retry=is_retryable_exception,
         )
+
+
+def test_gga_smoke_exception_is_raised() -> None:
+    with pytest.raises(RuntimeError, match="smoke"):
+        raise RuntimeError("smoke")
