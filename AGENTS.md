@@ -1,103 +1,57 @@
-# AGENTS.md - Enterprise Review Rules
+# AGENTS.md
 
-## Purpose
+## What matters here
 
-Act as a strict senior reviewer for this repository.
-Evaluate only staged changes and fail fast when a hard rule is violated.
-Prioritize correctness, security, reliability, and maintainability over speed.
+- Python 3.12 project with strict typing/linting gates (`ruff`, `mypy --strict`, `pytest`, `pip-audit`, `gitleaks`).
+- Architecture is hexagonal-ish: `app/core` (domain/use cases), `app/adapters` (external APIs), `app/repositories` (SQLite persistence), `app/infra` (config/db/retry wiring).
+- Main CLI entrypoint is `pipeline` (`app.main:main`) with `run-once` and `reprocess` (currently stubbed, prints not implemented).
 
-## Project Context
+## Fast local workflow
 
-- Stack: Python 3.12+, hexagonal style (core + adapters + infra + repositories).
-- Main quality tools: `ruff`, `mypy --strict`, `pytest`, `pip-audit`, `gitleaks`.
-- Runtime nature: IO-bound automation pipeline with external providers (Telegram, OpenAI, WordPress, LinkedIn, Pexels).
+- Install: `python -m pip install -e .[dev]`
+- Run once dry-run: `python -m app.main run-once --dry-run --db-path data/app.db`
+- Focused test: `python -m pytest tests/test_pipeline.py -q`
+- Full quality check: `python -m ruff check app tests && python -m mypy app tests && python -m pytest -q`
+- CI security check includes: `python -m pip_audit --ignore-vuln CVE-2026-3219` and `gitleaks git --redact --no-banner`
 
-## Mandatory Review Output
+## Git hooks and gates
 
-Always answer with this structure:
+- Repo uses versioned hooks via `core.hooksPath=.githooks`; pre-push runs both `scripts/local-quality-gate.ps1` and `scripts/local-security-scan.ps1`.
+- Local PowerShell gates use `.venv\Scripts\python`; if you do not use `.venv`, either adapt commands locally or expect hook failures.
+- `scripts/local-security-scan.ps1` also requires `trivy` in addition to `gitleaks`.
 
-1. `VERDICT: PASS | FAIL`
-2. `BLOCKERS:` bullet list (empty if none)
-3. `WARNINGS:` bullet list (empty if none)
-4. `PATCH SUGGESTIONS:` minimal actionable diff-level guidance
-5. `RISK LEVEL: low | medium | high`
+## Pipeline invariants (do not break)
 
-If any hard rule is violated, verdict MUST be `FAIL`.
+- Keep core boundaries: `app/core` must depend on ports/contracts, not concrete adapters.
+- Dedupe happens before external side effects (`updates_repo.exists(update_id)` short-circuits processing).
+- Dry-run must not call external providers and must not advance `state.telegram_offset`.
+- Non-dry-run advances offset to `max(update_id) + 1` only after processing batch.
+- Partial failure is first-class: WordPress success + later LinkedIn failure persists publication `status="partial"`.
+- Retries are bounded and retryable-only (see `app/infra/retry.py` and usage in `app/core/pipeline.py`).
 
-## Hard Fail Rules (Blockers)
+## Data and migrations
 
-### Architecture and Boundaries
+- DB is SQLite; startup calls `init_database()` which executes every `migrations/*.sql` file in sorted order on every run.
+- Migration files must be idempotent (`IF NOT EXISTS`, safe re-run semantics) because they are re-applied at startup.
+- Core tables and status enums are defined in `migrations/0001_init.sql`; repository changes must stay compatible.
 
-- `app/core` MUST NOT depend on adapter or infra implementation details.
-- New behavior in core MUST go through ports/protocols, not direct HTTP/DB calls.
-- Avoid framework leakage into domain models and core logic.
+## Testing conventions
 
-### Type Safety and Contracts
+- Unit tests use in-process doubles and `httpx.MockTransport`; keep tests deterministic and offline by default.
+- For behavior changes in pipeline/adapters/repositories, update or add targeted tests in `tests/`.
 
-- No reduction of typing strictness (`Any`, unchecked optional flows, silent casts) without clear justification.
-- Public function signatures and protocol contracts must remain explicit and coherent.
-- Config/env keys must be validated through typed settings, not ad-hoc string access.
+## CI/release facts
 
-### Error Handling and Reliability
+- PR gates workflow (`.github/workflows/pr-gates.yml`) currently runs on `workflow_dispatch`.
+- Release image workflow triggers only on tags matching `v*.*.*` and pushes to GHCR.
 
-- No swallowed exceptions (`except Exception: pass`, generic catch without handling).
-- Retry logic must be bounded and only for transient/retryable scenarios.
-- State mutation ordering must preserve idempotency and safe resume behavior.
+## Change/review expectations
 
-### Security and Secrets
-
-- Never commit secrets, tokens, credentials, or sensitive payload dumps.
-- No secret exposure in logs, errors, notifications, or test fixtures.
-- No insecure defaults that broaden access silently.
-
-### Data and Persistence Integrity
-
-- Schema-related changes require matching migration updates and repository compatibility.
-- No destructive data behavior without explicit rollback/mitigation notes.
-- Dedupe, offset progression, and publication status transitions must stay deterministic.
-
-### Test and Quality Gates
-
-- Any behavioral change MUST include or update tests aligned to changed behavior.
-- Changes that break `ruff`, `mypy`, `pytest`, `pip-audit`, or `gitleaks` gates are blockers.
-- Flaky/non-deterministic tests are not acceptable.
-
-## Warning Rules (Non-Blocking unless severe)
-
-- Excessive function complexity or low cohesion.
-- Missing docs for non-obvious tradeoffs.
-- Weak naming that obscures domain intent.
-- Overly broad file patterns/config changes without rationale.
-- Tight coupling between adapters and orchestrator logic.
-
-## Review Heuristics for This Repo
-
-- Validate pipeline guarantees: dedupe first, then publish workflow, then status/event consistency.
-- Verify partial-failure semantics: WordPress success + LinkedIn fail should persist `partial` clearly.
-- Check notifier usage for user-safe messages only (no internals/secrets).
-- Ensure dry-run path never mutates irreversible external state.
-- Favor small, atomic changes and deterministic control flow.
-
-## Secure Coding Rules
-
-- Use least privilege assumptions for tokens and external calls.
-- Fail closed on invalid config and malformed provider responses.
-- Sanitize or redact sensitive values before logging.
-- Do not add network calls in tests unless explicitly marked integration.
-
-## Commit and PR Governance
-
-- Enforce conventional commits (`feat|fix|refactor|test|docs|chore`).
-- Reject direct-to-main intent and missing traceability to requirement/spec when applicable.
-- Prefer PRs with focused scope and clear rollback path for risky changes.
-
-## Auto-Fix Guidance Style
-
-When failing, provide:
-
-- precise file path and line reference
-- why it violates a hard rule
-- the smallest safe fix
-- if relevant, one improved code snippet
-
-Keep feedback direct, technical, and actionable.
+- Use conventional commits: `feat|fix|refactor|test|docs|chore`.
+- Never commit secrets or raw sensitive payloads; redact tokens/credentials in logs and errors.
+- If asked to review staged changes, use this exact output format:
+  1. `VERDICT: PASS | FAIL`
+  2. `BLOCKERS:`
+  3. `WARNINGS:`
+  4. `PATCH SUGGESTIONS:`
+  5. `RISK LEVEL: low | medium | high`
