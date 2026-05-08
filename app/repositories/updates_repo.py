@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import sqlite3
 
+from app.core.models import InboundUpdate
+
 
 class UpdatesRepository:
     def __init__(self, conn: sqlite3.Connection) -> None:
@@ -28,6 +30,25 @@ class UpdatesRepository:
             VALUES(?, ?, ?, ?, ?)
             """,
             (update_id, chat_id, text, run_id, source_payload),
+        )
+
+    def get_by_id(self, update_id: int) -> InboundUpdate | None:
+        row = self.conn.execute(
+            """
+            SELECT update_id, chat_id, text, source_payload
+            FROM updates
+            WHERE update_id = ?
+            """,
+            (update_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        source_payload = row["source_payload"]
+        return InboundUpdate(
+            update_id=int(row["update_id"]),
+            chat_id=int(row["chat_id"]),
+            text=str(row["text"]),
+            raw_payload=str(source_payload) if source_payload is not None else "",
         )
 
     def list_failed_or_partial(self, limit: int = 50) -> list[int]:

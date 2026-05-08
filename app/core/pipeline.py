@@ -108,6 +108,81 @@ def run_once(
     )
 
 
+def run_reprocess(
+    *,
+    update_id: int,
+    openai: OpenAIPort,
+    wordpress: WordPressPort,
+    pexels: PexelsPort,
+    linkedin: LinkedInPort,
+    runs_repo: RunsRepository,
+    updates_repo: UpdatesRepository,
+    publications_repo: PublicationsRepository,
+    events_repo: EventsRepository,
+    notifier: Callable[[int, str], None] | None = None,
+) -> RunResult:
+    run_id = str(uuid4())
+    runs_repo.create_started(run_id)
+
+    events_repo.add(
+        run_id=run_id,
+        update_id=update_id,
+        stage="reprocess",
+        status="started",
+        detail="reprocessing single update",
+    )
+
+    update = updates_repo.get_by_id(update_id)
+    if update is None:
+        error = "update not found"
+        events_repo.add(
+            run_id=run_id,
+            update_id=update_id,
+            stage="reprocess",
+            status="failed",
+            detail=error,
+        )
+        runs_repo.finish(run_id, status="error", error=error)
+        return RunResult(run_id=run_id, status="error", updates_processed=0, next_offset=None)
+
+    current_status = publications_repo.get_status(update_id)
+    if current_status not in {"failed", "partial"}:
+        events_repo.add(
+            run_id=run_id,
+            update_id=update_id,
+            stage="reprocess",
+            status="skipped",
+            detail=f"status={current_status or 'missing'}",
+        )
+        runs_repo.finish(run_id, status="success")
+        return RunResult(run_id=run_id, status="success", updates_processed=0, next_offset=None)
+
+    _process_update(
+        run_id=run_id,
+        update=update,
+        updates_repo=updates_repo,
+        publications_repo=publications_repo,
+        events_repo=events_repo,
+        dry_run=False,
+        openai=openai,
+        wordpress=wordpress,
+        pexels=pexels,
+        linkedin=linkedin,
+        notifier=notifier,
+        skip_dedupe_and_insert=True,
+    )
+
+    result_status = publications_repo.get_status(update_id)
+    final_status = "partial" if result_status in {"failed", "partial"} else "success"
+    runs_repo.finish(run_id, status=final_status)
+    return RunResult(
+        run_id=run_id,
+        status=final_status,
+        updates_processed=1,
+        next_offset=None,
+    )
+
+
 def _process_update(
     *,
     run_id: str,
@@ -121,24 +196,26 @@ def _process_update(
     pexels: PexelsPort,
     linkedin: LinkedInPort,
     notifier: Callable[[int, str], None] | None,
+    skip_dedupe_and_insert: bool = False,
 ) -> None:
-    if updates_repo.exists(update.update_id):
-        events_repo.add(
-            run_id=run_id,
-            update_id=update.update_id,
-            stage="dedupe",
-            status="skipped",
-            detail="update already processed",
-        )
-        return
+    if not skip_dedupe_and_insert:
+        if updates_repo.exists(update.update_id):
+            events_repo.add(
+                run_id=run_id,
+                update_id=update.update_id,
+                stage="dedupe",
+                status="skipped",
+                detail="update already processed",
+            )
+            return
 
-    updates_repo.insert(
-        update_id=update.update_id,
-        chat_id=update.chat_id,
-        text=update.text,
-        run_id=run_id,
-        source_payload=update.raw_payload,
-    )
+        updates_repo.insert(
+            update_id=update.update_id,
+            chat_id=update.chat_id,
+            text=update.text,
+            run_id=run_id,
+            source_payload=update.raw_payload,
+        )
 
     source_url, title_hint = _extract_link_payload(update.text)
     if source_url is None:

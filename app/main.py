@@ -11,7 +11,7 @@ from app.adapters.openai import OpenAIAdapter
 from app.adapters.pexels import PexelsAdapter
 from app.adapters.telegram import TelegramAdapter
 from app.adapters.wordpress import WordPressAdapter
-from app.core.pipeline import run_once
+from app.core.pipeline import run_once, run_reprocess
 from app.infra.config import get_settings
 from app.infra.db import connect_db, init_database
 from app.repositories.events_repo import EventsRepository
@@ -51,12 +51,8 @@ def main() -> int:
     migrations_dir = Path(__file__).resolve().parents[1] / "migrations"
     init_database(db_path=db_path, migrations_dir=migrations_dir)
 
-    if args.command == "reprocess":
-        print(f"Reprocess for update_id={args.update_id} is not implemented yet")
-        return 0
-
     conn = connect_db(db_path)
-    owner = "run-once"
+    owner = args.command
     try:
         state_repo = StateRepository(conn)
         runs_repo = RunsRepository(conn)
@@ -89,20 +85,34 @@ def main() -> int:
                 client=client,
             )
 
-            result = run_once(
-                telegram=telegram,
-                openai=openai,
-                wordpress=wordpress,
-                pexels=pexels,
-                linkedin=linkedin,
-                state_repo=state_repo,
-                runs_repo=runs_repo,
-                updates_repo=updates_repo,
-                publications_repo=publications_repo,
-                events_repo=events_repo,
-                dry_run=args.dry_run,
-                notifier=telegram.notify,
-            )
+            if args.command == "run-once":
+                result = run_once(
+                    telegram=telegram,
+                    openai=openai,
+                    wordpress=wordpress,
+                    pexels=pexels,
+                    linkedin=linkedin,
+                    state_repo=state_repo,
+                    runs_repo=runs_repo,
+                    updates_repo=updates_repo,
+                    publications_repo=publications_repo,
+                    events_repo=events_repo,
+                    dry_run=args.dry_run,
+                    notifier=telegram.notify,
+                )
+            else:
+                result = run_reprocess(
+                    update_id=args.update_id,
+                    openai=openai,
+                    wordpress=wordpress,
+                    pexels=pexels,
+                    linkedin=linkedin,
+                    runs_repo=runs_repo,
+                    updates_repo=updates_repo,
+                    publications_repo=publications_repo,
+                    events_repo=events_repo,
+                    notifier=telegram.notify,
+                )
 
         conn.commit()
         print(

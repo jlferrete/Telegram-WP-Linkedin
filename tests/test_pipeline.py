@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from app.core.models import GeneratedPost, InboundUpdate
-from app.core.pipeline import run_once
+from app.core.pipeline import run_once, run_reprocess
 from app.infra.db import init_database
 from app.repositories.events_repo import EventsRepository
 from app.repositories.publications_repo import PublicationsRepository
@@ -179,5 +179,117 @@ def test_run_once_retries_transient_linkedin_failures(tmp_path: Path) -> None:
         ).fetchone()
         assert retry_rows is not None
         assert int(retry_rows["c"]) == 2
+    finally:
+        conn.close()
+
+
+def test_run_reprocess_failed_update_without_offset_advance(tmp_path: Path) -> None:
+    db_path = tmp_path / "app.db"
+    migrations_dir = Path(__file__).resolve().parents[1] / "migrations"
+    init_database(db_path=db_path, migrations_dir=migrations_dir)
+
+    from app.infra.db import connect_db
+
+    conn = connect_db(db_path)
+    try:
+        state_repo = StateRepository(conn)
+        runs_repo = RunsRepository(conn)
+        updates_repo = UpdatesRepository(conn)
+        publications_repo = PublicationsRepository(conn)
+        events_repo = EventsRepository(conn)
+
+        runs_repo.create_started("seed-run")
+        updates_repo.insert(
+            update_id=301,
+            chat_id=1,
+            text="https://example.com reprocess",
+            run_id="seed-run",
+            source_payload="{}",
+        )
+        publications_repo.upsert_status(update_id=301, status="failed", last_error="boom")
+        conn.commit()
+
+        telegram = DummyTelegram([])
+        openai = DummyOpenAI()
+        wordpress = DummyWordPress()
+        pexels = DummyPexels()
+        linkedin = DummyLinkedIn()
+
+        result = run_reprocess(
+            update_id=301,
+            openai=openai,
+            wordpress=wordpress,
+            pexels=pexels,
+            linkedin=linkedin,
+            runs_repo=runs_repo,
+            updates_repo=updates_repo,
+            publications_repo=publications_repo,
+            events_repo=events_repo,
+            notifier=telegram.notify,
+        )
+        conn.commit()
+
+        assert result.status == "success"
+        assert result.next_offset is None
+        assert state_repo.get("telegram_offset") == "0"
+        assert publications_repo.get_status(301) == "success"
+        assert openai.calls == 1
+        assert wordpress.calls == 1
+        assert pexels.calls == 1
+        assert linkedin.calls == 1
+    finally:
+        conn.close()
+
+
+def test_run_reprocess_skips_non_failed_status(tmp_path: Path) -> None:
+    db_path = tmp_path / "app.db"
+    migrations_dir = Path(__file__).resolve().parents[1] / "migrations"
+    init_database(db_path=db_path, migrations_dir=migrations_dir)
+
+    from app.infra.db import connect_db
+
+    conn = connect_db(db_path)
+    try:
+        runs_repo = RunsRepository(conn)
+        updates_repo = UpdatesRepository(conn)
+        publications_repo = PublicationsRepository(conn)
+        events_repo = EventsRepository(conn)
+
+        runs_repo.create_started("seed-run")
+        updates_repo.insert(
+            update_id=401,
+            chat_id=1,
+            text="https://example.com already-ok",
+            run_id="seed-run",
+            source_payload="{}",
+        )
+        publications_repo.upsert_status(update_id=401, status="success", last_error=None)
+        conn.commit()
+
+        openai = DummyOpenAI()
+        wordpress = DummyWordPress()
+        pexels = DummyPexels()
+        linkedin = DummyLinkedIn()
+
+        result = run_reprocess(
+            update_id=401,
+            openai=openai,
+            wordpress=wordpress,
+            pexels=pexels,
+            linkedin=linkedin,
+            runs_repo=runs_repo,
+            updates_repo=updates_repo,
+            publications_repo=publications_repo,
+            events_repo=events_repo,
+            notifier=None,
+        )
+        conn.commit()
+
+        assert result.status == "success"
+        assert result.updates_processed == 0
+        assert openai.calls == 0
+        assert wordpress.calls == 0
+        assert pexels.calls == 0
+        assert linkedin.calls == 0
     finally:
         conn.close()
