@@ -293,3 +293,37 @@ def test_run_reprocess_skips_non_failed_status(tmp_path: Path) -> None:
         assert linkedin.calls == 0
     finally:
         conn.close()
+
+
+def test_run_reprocess_missing_update_returns_error(tmp_path: Path) -> None:
+    db_path = tmp_path / "app.db"
+    migrations_dir = Path(__file__).resolve().parents[1] / "migrations"
+    init_database(db_path=db_path, migrations_dir=migrations_dir)
+
+    from app.infra.db import connect_db
+
+    conn = connect_db(db_path)
+    try:
+        runs_repo = RunsRepository(conn)
+        updates_repo = UpdatesRepository(conn)
+        publications_repo = PublicationsRepository(conn)
+        events_repo = EventsRepository(conn)
+
+        result = run_reprocess(
+            update_id=999999,
+            openai=DummyOpenAI(),
+            wordpress=DummyWordPress(),
+            pexels=DummyPexels(),
+            linkedin=DummyLinkedIn(),
+            runs_repo=runs_repo,
+            updates_repo=updates_repo,
+            publications_repo=publications_repo,
+            events_repo=events_repo,
+            notifier=None,
+        )
+        conn.commit()
+
+        assert result.status == "error"
+        assert result.updates_processed == 0
+    finally:
+        conn.close()

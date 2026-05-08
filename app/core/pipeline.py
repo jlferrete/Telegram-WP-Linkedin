@@ -126,10 +126,9 @@ def run_reprocess(
 
     events_repo.add(
         run_id=run_id,
-        update_id=update_id,
         stage="reprocess",
         status="started",
-        detail="reprocessing single update",
+        detail=f"reprocessing single update_id={update_id}",
     )
 
     update = updates_repo.get_by_id(update_id)
@@ -137,10 +136,9 @@ def run_reprocess(
         error = "update not found"
         events_repo.add(
             run_id=run_id,
-            update_id=update_id,
             stage="reprocess",
             status="failed",
-            detail=error,
+            detail=f"update_id={update_id};{error}",
         )
         runs_repo.finish(run_id, status="error", error=error)
         return RunResult(run_id=run_id, status="error", updates_processed=0, next_offset=None)
