@@ -27,3 +27,13 @@ The pre-push hook runs:
 
 - `scripts/local-quality-gate.ps1`
 - `scripts/local-security-scan.ps1`
+
+## Controlled E2E
+
+There is a controlled E2E test with real provider credentials:
+
+```bash
+python -m pytest tests/test_e2e_controlled.py -m e2e -q
+```
+
+Detailed setup and pass/fail criteria are documented in `docs/e2e-controlado.md`.
